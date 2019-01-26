@@ -41,11 +41,11 @@ func (suite *apiSuite) HappyPath() {
 
 	// and verify the SHA digest in the response body is correct
 	digest := body.Digest
-
 	digestBytes := sha256.Sum256([]byte(message))
 	expectedDigest := fmt.Sprintf("%x", digestBytes)
 	suite.Require().Equal(expectedDigest, digest)
 
+	// now do a GET with the digest we got, and verify we get our original message back
 	req, err = http.NewRequest("GET", fmt.Sprintf("/messages/%s", digest), nil)
 	suite.Require().NoError(err, "error building POST request")
 
