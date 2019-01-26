@@ -71,6 +71,23 @@ func (suite *apiSuite) PutMalformed() {
 	suite.Require().Equal(http.StatusBadRequest, recorder.Code)
 }
 
+func (suite *apiSuite) PutEmpty() {
+	postBody := strings.NewReader(`{"message":""}`)
+	req, err := http.NewRequest("POST", "/messages", postBody)
+	suite.Require().NoError(err, "error building POST request")
+
+	recorder := httptest.NewRecorder()
+	suite.router.ServeHTTP(recorder, req)
+
+	// verify a 400 response since our JSON contains no message text
+	suite.Require().Equal(http.StatusBadRequest, recorder.Code)
+
+	decoder := json.NewDecoder(recorder.Body)
+	var body putResponse
+	suite.Require().NoError(decoder.Decode(&body), "malformed HTTP response to putting empty message")
+	suite.Require().NotEmpty(body.Error)
+}
+
 func (suite *apiSuite) GetEmpty() {
 	// expect a 400 if we give no digest at all
 

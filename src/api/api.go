@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"persist"
 )
 
-var messages map[string]string
+var cache persist.Cache
 
 type putRequest struct {
 	Message string `json:"message"`
@@ -25,7 +26,7 @@ type putResponse struct {
 }
 
 func NewRouter() *mux.Router {
-	messages = map[string]string{}
+	cache = persist.NewMockCache()
 
 	router := mux.NewRouter()
 
@@ -53,8 +54,8 @@ func get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value, ok := messages[digest]
-	if !ok {
+	message := cache.Get(digest)
+	if len(message) < 1 {
 		// cache miss; no digest for this message
 		w.WriteHeader(http.StatusNotFound)
 		response.Message = "message not found"
@@ -63,7 +64,7 @@ func get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.Message = value
+	response.Message = message
 
 	json.NewEncoder(w).Encode(response)
 
@@ -89,7 +90,13 @@ func put(w http.ResponseWriter, r *http.Request) {
 	digest := fmt.Sprintf("%x", digestBytes) // %x for lowercase hex characters
 
 	// put in cache
-	messages[digest] = message
+	err = cache.Put(digest, message)
+	if err != nil {
+		response.Error = fmt.Sprintf("malformed request body: %s", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
 
 	response.Digest = digest
 	json.NewEncoder(w).Encode(response)
