@@ -1,12 +1,14 @@
 package api
 
 import (
+	"github.com/mikerodonnell/message_digest_cache/pkg/persist"
+
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
-	"persist"
+
+	"github.com/gorilla/mux"
 )
 
 var cache persist.Cache

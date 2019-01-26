@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"api"
+	"github.com/mikerodonnell/message_digest_cache/pkg/api"
 )
 
 func main() {
