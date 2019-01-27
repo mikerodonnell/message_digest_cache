@@ -8,7 +8,8 @@ import (
 	"github.com/mikerodonnell/message_digest_cache/pkg/persist"
 )
 
-const host = "localhost:8000"
+// important to use :8000, not localhost:8000, for docker ports to forward
+const host = ":8000"
 
 func main() {
 	log.Println("connecting to distributed cache")

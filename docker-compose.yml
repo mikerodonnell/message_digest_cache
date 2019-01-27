@@ -1,0 +1,16 @@
+redis:
+  image: redis
+  container_name: cache
+  expose:
+  - 6379
+app:
+  image: golang:1.11
+  volumes:
+  - ./:/go/message_digest_cache
+  working_dir: /go/message_digest_cache
+  links:
+  - redis
+  ports:
+  - 8000:8000
+  command: go run cmd/main.go
+

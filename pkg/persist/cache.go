@@ -8,7 +8,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-const redisHost = "localhost:6379"
+// see docker-compose.yml
+// set this to :6379 if redis is running on localhost
+const redisHost = "redis:6379"
 
 type Cache interface {
 	// Get returns the value stored under the given key, if any
