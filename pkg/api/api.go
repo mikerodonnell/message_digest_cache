@@ -1,14 +1,14 @@
 package api
 
 import (
-	"github.com/mikerodonnell/message_digest_cache/pkg/persist"
-
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/mikerodonnell/message_digest_cache/pkg/persist"
 )
 
 var cache persist.Cache
@@ -27,8 +27,8 @@ type putResponse struct {
 	Error  string `json:"error,omitempty"`
 }
 
-func NewRouter() *mux.Router {
-	cache = persist.NewMockCache()
+func NewRouter(newCache persist.Cache) *mux.Router {
+	cache = newCache
 
 	router := mux.NewRouter()
 
@@ -94,8 +94,11 @@ func put(w http.ResponseWriter, r *http.Request) {
 	// put in cache
 	err = cache.Put(digest, message)
 	if err != nil {
-		response.Error = fmt.Sprintf("malformed request body: %s", err.Error())
-		w.WriteHeader(http.StatusBadRequest)
+		sanitizedMessage := fmt.Sprintf("server error storing digest for %s", message)
+		log.Println(sanitizedMessage, err)
+		response.Error = sanitizedMessage
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response)
 
 		return
 	}

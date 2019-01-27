@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/mikerodonnell/message_digest_cache/pkg/persist"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -19,7 +20,7 @@ type apiSuite struct {
 }
 
 func (suite *apiSuite) SetupSuite() {
-	suite.router = NewRouter()
+	suite.router = NewRouter(persist.NewMockCache())
 }
 
 func (suite *apiSuite) HappyPath() {
