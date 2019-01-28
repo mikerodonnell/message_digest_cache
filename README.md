@@ -1,8 +1,5 @@
-## message_digest_cache
-demo REST service for key-value-pair storage, optimized for immutable values
-
 ### about
-stores message strings and returns a SHA 256 hash for future retrieval. uses a combination of local in-memory and distributed Redis caches. since the cache key is a always the SHA hash of the value, there's no updates, expiration, or cache synchronization to worry about across app nodes. so each app node can safely return the locally cached value if one exists, and pull from Redis if not. the local cache won't help in all cases, but never hurts. 
+demo REST service for key-value-pair storage, optimized for immutable values. stores message strings and returns a SHA 256 hash for future retrieval. uses a combination of local in-memory and distributed Redis caches. since the cache key is a always the SHA hash of the value, there's no updates, expiration, or cache synchronization to worry about across app nodes. so each app node can safely return the locally cached value if one exists, and pull from Redis if not. the local cache won't help in all cases, but never hurts. 
 
 ### quickstart
 ```
@@ -35,3 +32,7 @@ docker-compose run app go test -v ./...
 
 ### notes
 runs on Go 1.11 with Go Modules. no GOPATH needed!
+
+### TODO
+* transactional put across multiple caches. current if the Redis SET fails, the local cache insert is not rolled back
+* max size of local cache to cap memory usage
