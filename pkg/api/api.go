@@ -11,7 +11,7 @@ import (
 	"github.com/mikerodonnell/message_digest_cache/pkg/persist"
 )
 
-var cache persist.Cache
+var caches []persist.Cache
 
 type putRequest struct {
 	Message string `json:"message"`
@@ -27,8 +27,9 @@ type putResponse struct {
 	Error  string `json:"error,omitempty"`
 }
 
-func NewRouter(newCache persist.Cache) *mux.Router {
-	cache = newCache
+// NewRouter creates a mux.Router that uses the given cache(s) to
+func NewRouter(newCaches ...persist.Cache) *mux.Router {
+	caches = newCaches
 
 	router := mux.NewRouter()
 
@@ -56,18 +57,20 @@ func get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message := cache.Get(digest)
-	if len(message) < 1 {
-		// cache miss; no digest for this message
-		w.WriteHeader(http.StatusNotFound)
-		response.Message = "message not found"
-		json.NewEncoder(w).Encode(response)
+	for _, cache := range caches {
+		message := cache.Get(digest)
+		if len(message) > 1 {
+			// cache hit! populate response and return
+			response.Message = message
+			json.NewEncoder(w).Encode(response)
 
-		return
+			return
+		}
 	}
 
-	response.Message = message
-
+	// cache miss; no digest for this message
+	w.WriteHeader(http.StatusNotFound)
+	response.Message = "message not found"
 	json.NewEncoder(w).Encode(response)
 
 	return
@@ -91,16 +94,20 @@ func put(w http.ResponseWriter, r *http.Request) {
 	digestBytes := sha256.Sum256([]byte(message))
 	digest := fmt.Sprintf("%x", digestBytes) // %x for lowercase hex characters
 
-	// put in cache
-	err = cache.Put(digest, message)
-	if err != nil {
-		sanitizedMessage := fmt.Sprintf("server error storing digest for %s", message)
-		log.Println(sanitizedMessage, err)
-		response.Error = sanitizedMessage
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(response)
+	// put in each cache
+	for _, cache := range caches {
+		err = cache.Put(digest, message)
+		if err != nil {
+			// TODO: in a production implementation we'd likely want transactionality here, across all caches
 
-		return
+			sanitizedMessage := fmt.Sprintf("server error storing digest for %s", message)
+			log.Println(sanitizedMessage, err)
+			response.Error = sanitizedMessage
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(response)
+
+			return
+		}
 	}
 
 	response.Digest = digest

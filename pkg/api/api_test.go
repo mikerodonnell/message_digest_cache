@@ -20,7 +20,7 @@ type apiSuite struct {
 }
 
 func (suite *apiSuite) SetupSuite() {
-	suite.router = NewRouter(persist.NewMockCache())
+	suite.router = NewRouter(persist.NewLocalCache())
 }
 
 func (suite *apiSuite) HappyPath() {

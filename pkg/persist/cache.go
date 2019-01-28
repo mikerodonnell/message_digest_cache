@@ -22,12 +22,12 @@ type Cache interface {
 	Put(key string, value string) error
 }
 
-type mockCache struct {
+type localCache struct {
 	// messages is a map of digests to plaintext messages
 	values map[string]string
 }
 
-func (c *mockCache) Get(key string) string {
+func (c *localCache) Get(key string) string {
 	message, ok := c.values[key]
 	if !ok {
 		// cache miss, return zero-value
@@ -37,7 +37,7 @@ func (c *mockCache) Get(key string) string {
 	return message
 }
 
-func (c *mockCache) Put(key string, value string) error {
+func (c *localCache) Put(key string, value string) error {
 	if len(key) < 1 || len(value) < 1 {
 		return errors.Errorf("can't put {%s: %s}, non-empty key and value required", key, value)
 	}
@@ -47,8 +47,8 @@ func (c *mockCache) Put(key string, value string) error {
 	return nil
 }
 
-func NewMockCache() *mockCache {
-	return &mockCache{
+func NewLocalCache() *localCache {
+	return &localCache{
 		map[string]string{},
 	}
 }
@@ -58,6 +58,7 @@ type redisCache struct {
 }
 
 func (c *redisCache) Get(key string) string {
+	log.Println(fmt.Sprintf("fetching %s from redis", key))
 	response, err := c.Do("GET", key)
 	if err != nil {
 		// this should never happen; if the key doesn't exist redis returns an empty response, no error
@@ -67,9 +68,7 @@ func (c *redisCache) Get(key string) string {
 	}
 
 	value, ok := response.([]byte)
-	if !ok {
-		// also should never happen
-		log.Println(fmt.Sprintf("malformatted response getting %s, returning zero value", key))
+	if value == nil || !ok {
 		return ""
 	}
 
