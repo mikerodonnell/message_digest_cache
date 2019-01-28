@@ -64,6 +64,7 @@ func (c *redisCache) Get(key string) string {
 		// this should never happen; if the key doesn't exist redis returns an empty response, no error
 		// log and swallow this error for this prototype app
 		log.Println(fmt.Sprintf("unexpected error getting %s, returning zero value", key))
+		log.Println(err)
 		return ""
 	}
 
